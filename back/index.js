@@ -1,27 +1,20 @@
 const {app,express} = require("./server")
+const {saucesRouter} = require("./router/sauce")
+const {authRouter} = require("./router/auth")
 const port = 3000;
 require("./mongo");
-const {upload} = require("./middleware/multer")
-
 const path = require("path")
+
 // connessione database
 require("./mongo")
 
-// controllers
-const {createUser,logUser} = require("./controllers/user")
-const { getSauces, createSauces, getSauceById, deletesauce  } = require("./controllers/sauces");
+// middleware
 
-
-
-const{authenticateUser} = require("./middleware/auth")
+app.use("/api/sauces",saucesRouter)
+app.use("/api/auth",authRouter)
 
 // Rotte
-app.post("/api/auth/signup", createUser);
-app.post("/api/auth/login", logUser);
-app.get("/api/sauces", authenticateUser, getSauces);
-app.post("/api/sauces",authenticateUser , upload.single("image"),createSauces)
-app.get("/api/sauces/:id",authenticateUser,getSauceById)
-app.delete("/api/sauces/:id",authenticateUser, deletesauce)
+
 app.get("/",(req,res)=>res.send("hello world"))
 
 // Avvio del server
