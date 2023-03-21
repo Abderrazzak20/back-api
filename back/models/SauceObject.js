@@ -1,17 +1,20 @@
-const mongoose = require("mongoose")
-const productSchema = new mongoose.Schema({
-    userId: String,
-    name: String,
-    manufacturer: String,
-    description: String,
-    mainPepper: String,
-    imageUrl: String,
-    heat: Number,
-    likes: Number,
-    dislikes: Number,
-    usersLiked:[String],
-    usersDisliked:[String]
-})
-const Product = mongoose.model("Product",productSchema)
+const mongoose = require ('mongoose');
 
-module.exports=('SauceObjectCreate', Product);
+const thingSchemaCreate = mongoose.Schema({
+  userId: { type: String, required: true },
+  name: { type: String, required: true },
+  manufacturer: { type: String, required: true },
+  description: { type: String, required: true },
+  mainPepper: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+  heat: { type: Number, required: true },
+  likes: { type: Number },
+  dislikes: { type: Number },
+  usersLiked: [String, Number],
+  usersDisliked: [String, Number],
+});
+
+const Product = mongoose.model('SauceObjectCreate', thingSchemaCreate);
+
+module.exports = Product;
+
