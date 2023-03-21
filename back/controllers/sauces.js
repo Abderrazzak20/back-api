@@ -1,31 +1,31 @@
 
-const { unlink } = require("fs/promises")
+const  {unlink} = require("fs/promises")
 
 const Product = require("../models/SauceObject")
 
+ 
 
-
-function getSauces(req, res) {
-  Product.find({})
-    .then((sauce) => res.send(sauce))
-    .catch((error) => res.status(500).send(error))
+function getSauces(req,res){
+   Product.find({})
+   .then((sauce)=> res.send(sauce))
+   .catch((error) => res.status(500).send(error))
 }
 
 
-function getSauce(req, res) {
-  const { id } = req.params
+function getSauce(req,res) {
+  const {id} = req.params
   return Product.findById(id)
 }
 
 function getSauceById(req, res) {
-  getSauce(req, res)
-    .then((product) => {
-      if (!product) {
-        return res.status(404).send({ message: "oggetto non trovato" })
-      }
-      return res.send(product);
-    })
-    .catch((err) => res.status(500).send(err))
+  getSauce(req,res)
+  .then((product)=> {
+    if (!product) {
+      return res.status(404).send({message: "oggetto non trovato"})
+    }
+    return res.send(product);
+  })
+  .catch((err)=> res.status(500).send(err))
 }
 
 
@@ -45,20 +45,19 @@ function deleteImage(product) {
   return unlink("images/" + imageToDelete)
 }
 
+  
 
 
-
-
-function ModifySauces(req, res) {
-  const { params: { id } } = req
+ function ModifySauces(req, res) {
+  const { params : {id} } = req
   const hasNewImage = req.file != null
   const payload = makePayload(hasNewImage, req)
 
-  Product.findByIdAndUpdate(id, payload)
-    .then((dbResponse) => sendClientResponse(dbResponse, res))
-    .then((product) => deleteImage(product))
-    .then((res) => console.log("file a eliminare", res))
-    .catch((err) => console.error("problem updatting", err))
+Product.findByIdAndUpdate(id,payload)
+.then((dbResponse)=> sendClientResponse(dbResponse,res))
+.then((product)=> deleteImage(product))
+.then((res)=> console.log("file a eliminare",res))
+.catch((err)=> console.error("problem updatting",err))
 }
 
 
@@ -66,15 +65,15 @@ function ModifySauces(req, res) {
 
 
 
-function makePayload(hasNewImage, req) {
-  if (!hasNewImage) return req.body
-  const payload = JSON.parse(req.body.sauce)
-  payload.imageUrl = makeImageUrl(req, req.file.fileName)
-  console.log("nuovo immagini a gestire")
-  console.log("ecco il pyaload", payload)
-  return payload
-
-}
+function makePayload(hasNewImage,req){
+  if (!hasNewImage) return req.body 
+    const payload = JSON.parse(req.body.sauce)
+    payload.imageUrl = makeImageUrl(req,req.file.fileName)
+    console.log("nuovo immagini a gestire")
+    console.log("ecco il pyaload",payload)
+    return payload
+  
+  }
 
 function sendClientResponse(product, res) {
   if (product == null) {
@@ -91,42 +90,42 @@ function makeImageUrl(req, fileName) {
 }
 
 
-function createSauces(req, res) {
-  const { body, file } = req
-  const { fileName } = file
-  const sauce = JSON.parse(body.sauce)
-  const { name, manufacturer, mainPepper, description, heat, userId } = sauce
+function createSauces(req,res){
+    const {body,file} = req
+  const {fileName} = file  
+const sauce = JSON.parse(body.sauce)
+const {name,manufacturer,mainPepper,description,heat,userId} = sauce
 
-  const product = new Product({
-    userId: userId,
-    name: name,
-    manufacturer: manufacturer,
-    description: description,
-    mainPepper: mainPepper,
-    imageUrl: makeImageUrl(req, fileName),
-    heat: heat,
-    likes: 0,
-    dislikes: 0,
-    usersLiked: [],
-    usersDisliked: []
-  })
-  product
+    const product = new Product({
+        userId: userId,
+        name : name,
+        manufacturer : manufacturer,
+        description : description,
+        mainPepper: mainPepper,
+        imageUrl : makeImageUrl(req,fileName),
+        heat : heat,
+        likes: 0,
+        dislikes: 0,
+        usersLiked:[],
+        usersDisliked:[]
+    })
+    product
     .save()
-    .then((message) => res.status(201).send({ message: message }))
-    .catch((err) => res.status(500).send(err))
-
+    .then((message)=> res.status(201).send({message : message }))
+   .catch((err) => res.status(500).send(err))
+   
 }
 
 
-function likeSauces(req, res) {
-  const { like, userId } = req.body
+function likeSauces(req,res){
+  const{like , userId} = req.body
 
-  if (![1, -1, 0].includes(like)) return res.status(403).send({ message: "invalid like value" })
-  getSauce(req, res)
-    .then((product) => updateVote(product, like, userId, res))
-    .then((pr) => pr.save())
-    .then((prod) => sendClientResponse(prod, res))
-    .catch((err) => res.status(500).send(err))
+  if (![1,-1,0].includes(like)) return res.status(403).send({message:"invalid like value"})
+    getSauce(req,res)
+  .then((product)=> updateVote(product,like,userId,res))
+  .then((pr)=> pr.save())
+  .then((prod) => sendClientResponse(prod,res))
+  .catch((err)=> res.status(500).send(err))
 }
 
 
@@ -154,35 +153,35 @@ function incrementVote(product, userId, like) {
 }
 
 
-function updateVote(product, like, userId, res) {
-  if (like === 1 || like === -1) return incrementVote(product, userId, like)
-  return resetVote(product, userId, res)
+function updateVote(product,like,userId,res){
+  if (like === 1 || like === -1 ) return incrementVote(product,userId,like)
+ return resetVote(product,userId,res)
 }
 
-function resetVote(product, userId, res) {
-  const { usersLiked, usersDisliked } = product
-  if ([usersLiked, usersDisliked].every((arr) => arr.includes(userId)))
-    return Promise.reject("user seems to have voted both ways")
+function resetVote(product,userId,res){
+  const {usersLiked,usersDisliked} = product
+  if ([usersLiked,usersDisliked].every((arr) => arr.includes(userId))) 
+  return Promise.reject(  "user seems to have voted both ways") 
+    
+  if(![usersLiked,usersDisliked].some ((arr) => arr.includes(userId))) 
+  return Promise.reject("user seems to have  not voted")
 
-  if (![usersLiked, usersDisliked].some((arr) => arr.includes(userId)))
-    return Promise.reject("user seems to have  not voted")
-
-  if (usersLiked.includes(userId)) {
-    --product.likes
-    product.usersLiked = product.usersLiked.filter((id) => id !== userId)
-  }
-  else {
-    --product.dislikes
-    product.usersDisliked = product.usersDisliked.filter((id) => id !== userId)
-
-  }
-  return product
+ if(usersLiked.includes(userId)){
+  --product.likes
+product.usersLiked = product.usersLiked.filter((id)=> id !== userId)
+ }
+ else{
+  --product.dislikes
+  product.usersDisliked = product.usersDisliked.filter((id)=> id !== userId)
+   
+ }
+ return product
 }
 
 
 
 
-module.exports = { getSauces, createSauces, getSauceById, deleteSauce, ModifySauces, likeSauces }
+module.exports = {getSauces,createSauces,getSauceById,deleteSauce , ModifySauces,likeSauces}
 
 
 
