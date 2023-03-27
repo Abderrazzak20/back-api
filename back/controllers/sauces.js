@@ -3,13 +3,13 @@ const Product = require("../models/SauceObject")
 
 function getSauces(req, res) {
   Product.find({})
-  .then((sauce) => {
-  res.send(sauce);
-  })
-  .catch((error) => {
-  res.status(500).send(error);
-  });
-  }
+    .then((sauce) => {
+      res.send(sauce);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+}
 
 function getSauce(req, res) {
   const { id } = req.params
@@ -28,24 +28,22 @@ function getSauceById(req, res) {
 }
 
 function deleteSauce(req, res) {
-const { id } = req.params;
-
-Product.findByIdAndDelete(id)
-.then((product) => {
-sendClientResponse(product, res);
-return deleteImage(product);
-})
-.then(() => {
-console.log("FILE DELETED");
-})
-.catch((err) => {
-res.status(500).send({ message: err });
-});
+  const { id } = req.params;
+  Product.findByIdAndDelete(id)
+    .then((product) => {
+      sendClientResponse(product, res);
+      return deleteImage(product);
+    })
+    .then(() => {
+      console.log("FILE DELETED");
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err });
+    });
 }
 
 function deleteImage(product) {
   if (product == null) return
- 
   const imageToDelete = product.imageUrl.split("/").at(-1)
   return unlink("images/" + imageToDelete)
 }
@@ -58,30 +56,25 @@ function ModifySauces(req, res) {
   Product.findByIdAndUpdate(id, payload)
     .then((dbResponse) => sendClientResponse(dbResponse, res))
     .then((product) => deleteImage(product))
-    
     .catch((err) => console.error("problem updatting", err))
 }
 
 function makePayload(hasNewImage, req) {
-if (!hasNewImage) {
-return req.body;
-}
-
-const payload = JSON.parse(req.body.sauce);
-payload.imageUrl = makeImageUrl(req, req.file.fileName);
-
-return payload;
+  if (!hasNewImage) {
+    return req.body;
+  }
+  const payload = JSON.parse(req.body.sauce);
+  payload.imageUrl = makeImageUrl(req, req.file.fileName);
+  return payload;
 }
 
 function sendClientResponse(product, res) {
   if (product == null) {
-    
     return res.status(404)
-    .send({ message: "Object not found in database" })
+      .send({ message: "Object not found in database" })
   }
-  
   return Promise.resolve(res.status(200).send(product))
-  .then(() => product)
+    .then(() => product)
 }
 
 function makeImageUrl(req, fileName) {
@@ -113,11 +106,9 @@ function createSauces(req, res) {
 
 function likeSauces(req, res) {
   const { like, userId } = req.body;
-
   if (![1, -1, 0].includes(like)) {
     return res.status(403).send({ message: "invalid like value" });
   }
-
   getSauce(req, res)
     .then((product) => updateVote(product, like, userId, res))
     .then((sauceToSave) => sauceToSave.save())
@@ -125,63 +116,41 @@ function likeSauces(req, res) {
     .catch((err) => res.status(500).send(err));
 }
 
-
 function incrementVote(product, userId, like) {
-  const { usersLiked, usersDisliked } = product;
-  let votersArray;
-  if (like === 1) {
-    votersArray = usersLiked;
-    if (usersDisliked.includes(userId)) {
-      const oppositeIndex = usersDisliked.indexOf(userId);
-      usersDisliked.splice(oppositeIndex, 1);
-      ++product.likes;
-    } else {
-      votersArray.push(userId);
-      ++product.likes;
-    }
-  } else {
-    votersArray = usersDisliked;
-    if (usersLiked.includes(userId)) {
-      const oppositeIndex = usersLiked.indexOf(userId);
-      usersLiked.splice(oppositeIndex, 1);
-      ++product.dislikes;
-    } else {
-      votersArray.push(userId);
-      ++product.dislikes;
-    }
-  }
-  return product;
+  const { usersLiked, usersDisliked } = product
+  const votersArray = like === 1 ? usersLiked : usersDisliked
+  if (votersArray.includes(userId)) return product
+  votersArray.push(userId)
+  like === 1 ? ++product.likes : ++product.dislikes
+  return product
 }
 
 function updateVote(product, like, userId, res) {
-  // Se il voto è positivo o negativo, incrementa il conteggio e aggiorna gli array dei votanti
   if (like === 1 || like === -1) {
     return incrementVote(product, userId, like);
   }
-  // Se il voto è nullo, resetta il conteggio e gli array dei votanti
   else {
     return resetVote(product, userId, res);
   }
 }
 
 function resetVote(product, userId, res) {
-  const { usersLiked, usersDisliked } = product
-  if ([usersLiked, usersDisliked].every((arr) => arr.includes(userId)))
-    return Promise.reject("user seems to have voted both ways")
-
-  if (![usersLiked, usersDisliked].some((arr) => arr.includes(userId)))
-    return Promise.reject("user seems to have  not voted")
-
+  const { usersLiked, usersDisliked } = product;
   if (usersLiked.includes(userId)) {
-    --product.likes
-    product.usersLiked = product.usersLiked.filter((id) => id !== userId)
+    --product.likes;
+    product.usersLiked = product.usersLiked.filter((id) => id !== userId);
+  }
+  else if (usersDisliked.includes(userId)) {
+    --product.dislikes;
+    product.usersDisliked = product.usersDisliked.filter((id) => id !== userId);
   }
   else {
-    --product.dislikes
-    product.usersDisliked = product.usersDisliked.filter((id) => id !== userId)
+    res.status(403).send({ message: "user seems to have not voted" });
+    return null;
   }
-  return product
+  return product;
 }
+
 module.exports = { getSauces, createSauces, getSauceById, deleteSauce, ModifySauces, likeSauces }
 
 
