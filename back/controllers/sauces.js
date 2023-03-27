@@ -3,9 +3,13 @@ const Product = require("../models/SauceObject")
 
 function getSauces(req, res) {
   Product.find({})
-    .then((sauce) => res.send(sauce))
-    .catch((error) => res.status(500).send(error))
-}
+  .then((sauce) => {
+  res.send(sauce);
+  })
+  .catch((error) => {
+  res.status(500).send(error);
+  });
+  }
 
 function getSauce(req, res) {
   const { id } = req.params
@@ -16,7 +20,7 @@ function getSauceById(req, res) {
   getSauce(req, res)
     .then((product) => {
       if (!product) {
-        return res.status(404).send({ message: "oggetto non trovato" })
+        return res.status(404).send({ message: "object not found" })
       }
       return res.send(product);
     })
@@ -24,17 +28,24 @@ function getSauceById(req, res) {
 }
 
 function deleteSauce(req, res) {
-  const { id } = req.params
-  Product.findByIdAndDelete(id)
-    .then((product) => sendClientResponse(product, res))
-    .then((item) => deleteImage(item))
-    .then((res) => console.log("FILE DELETED", res))
-    .catch((err) => res.status(500).send({ message: err }))
+const { id } = req.params;
+
+Product.findByIdAndDelete(id)
+.then((product) => {
+sendClientResponse(product, res);
+return deleteImage(product);
+})
+.then(() => {
+console.log("FILE DELETED");
+})
+.catch((err) => {
+res.status(500).send({ message: err });
+});
 }
 
 function deleteImage(product) {
   if (product == null) return
-  console.log("DELETE IMAGE", product)
+ 
   const imageToDelete = product.imageUrl.split("/").at(-1)
   return unlink("images/" + imageToDelete)
 }
@@ -47,27 +58,28 @@ function ModifySauces(req, res) {
   Product.findByIdAndUpdate(id, payload)
     .then((dbResponse) => sendClientResponse(dbResponse, res))
     .then((product) => deleteImage(product))
-    .then((res) => console.log("file a eliminare", res))
+    
     .catch((err) => console.error("problem updatting", err))
 }
 
 function makePayload(hasNewImage, req) {
-  if (!hasNewImage) return req.body
-  const payload = JSON.parse(req.body.sauce)
-  payload.imageUrl = makeImageUrl(req, req.file.fileName)
-  console.log("nuovo immagini a gestire")
-  console.log("ecco il pyaload", payload)
-  return payload
+if (!hasNewImage) {
+return req.body;
+}
 
+const payload = JSON.parse(req.body.sauce);
+payload.imageUrl = makeImageUrl(req, req.file.fileName);
+
+return payload;
 }
 
 function sendClientResponse(product, res) {
   if (product == null) {
-    console.log("NOTHING TO UPDATE")
+    
     return res.status(404)
     .send({ message: "Object not found in database" })
   }
-  console.log("ALL GOOD, UPDATING:", product)
+  
   return Promise.resolve(res.status(200).send(product))
   .then(() => product)
 }
@@ -94,8 +106,7 @@ function createSauces(req, res) {
     usersLiked: [],
     usersDisliked: []
   })
-  product
-    .save()
+  product.save()
     .then((message) => res.status(201).send({ message: message }))
     .catch((err) => res.status(500).send(err))
 }

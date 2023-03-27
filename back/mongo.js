@@ -10,5 +10,5 @@ const uri = "mongodb+srv://" + user + ":" + password + "@cluster0.swcrutq.mongod
 mongoose
     .connect(uri)
     .then(() => ("Collegato a MongoDB"))
-    .catch((err) => resizeBy.send(message +"Errore di connessione a MongoDB: " + err));
+    .catch((err) => resizeBy.send(message + "Errore di connessione a MongoDB: " + err));
 
