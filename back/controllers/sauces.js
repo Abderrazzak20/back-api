@@ -106,55 +106,51 @@ function createSauces(req, res) {
 
 function likeSauces(req, res) {
   const { like, userId } = req.body;
+
+  // Verifica che il valore di like sia valido
   if (![1, -1, 0].includes(like)) {
     return res.status(403).send({ message: "invalid like value" });
   }
+
+  // Cerca il prodotto nel database
   getSauce(req, res)
-    .then((product) => updateVote(product, like, userId, res))
-    .then((sauceToSave) => sauceToSave.save())
+    .then((product) => {
+      const { usersLiked, usersDisliked } = product;
+
+      // Aggiunge un like
+      if (like === 1) {
+        if (!usersLiked.includes(userId)) {
+          product.likes++;
+          product.usersLiked.push(userId);
+        }
+      }
+      // Aggiunge un dislike
+      else if (like === -1) {
+        if (!usersDisliked.includes(userId)) {
+          product.dislikes++;
+          product.usersDisliked.push(userId);
+        }
+      }
+      // Rimuove un like o un dislike
+      else {
+        if (usersLiked.includes(userId)) {
+          product.likes--;
+          product.usersLiked = usersLiked.filter((id) => id !== userId);
+        } else if (usersDisliked.includes(userId)) {
+          product.dislikes--;
+          product.usersDisliked = usersDisliked.filter((id) => id !== userId);
+        } else {
+          // L'utente non ha votato
+          return res.status(403).send({ message: "user seems to have not voted" });
+        }
+      }
+
+      // Salva il prodotto nel database
+      return product.save();
+    })
     .then((prod) => sendClientResponse(prod, res))
     .catch((err) => res.status(500).send(err));
 }
 
-function incrementVote(product, userId, like) {
-  const { usersLiked, usersDisliked } = product
-  const votersArray = like === 1 ? usersLiked : usersDisliked
-  if (votersArray.includes(userId)) return product
-  votersArray.push(userId)
-  like === 1 ? ++product.likes : ++product.dislikes
-  return product
-}
-
-function updateVote(product, like, userId, res) {
-  if (like === 1 || like === -1) {
-    return incrementVote(product, userId, like);
-  }
-  else {
-    return resetVote(product, userId, res);
-  }
-}
-
-function resetVote(product, userId, res) {
-  const { usersLiked, usersDisliked } = product;
-  if (usersLiked.includes(userId)) {
-    --product.likes;
-    product.usersLiked = product.usersLiked.filter((id) => id !== userId);
-  }
-  else if (usersDisliked.includes(userId)) {
-    --product.dislikes;
-    product.usersDisliked = product.usersDisliked.filter((id) => id !== userId);
-  }
-  else {
-    res.status(403).send({ message: "user seems to have not voted" });
-    return null;
-  }
-  return product;
-}
-
 module.exports = { getSauces, createSauces, getSauceById, deleteSauce, ModifySauces, likeSauces }
-
-
-
-
-
 
